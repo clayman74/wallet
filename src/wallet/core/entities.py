@@ -43,6 +43,12 @@ class OperationType(Enum):
 
 
 @dataclass
+class Period:
+    begin: date
+    end: date
+
+
+@dataclass
 class EntityWithBalance(Entity):
     balance: Dict[date, Balance] = field(default_factory=dict, init=False)
 
@@ -208,3 +214,17 @@ class OperationFilters(Filters):
     account: Optional[Account] = None
     category: Optional[Category] = None
     tags: List[Tag] = field(default_factory=list)
+
+
+@dataclass
+class StatisticsFilters:
+    user: User
+    period: Period
+
+
+@dataclass
+class Statistics:
+    period: Period
+    account: int
+    expenses: Decimal
+    incomes: Decimal

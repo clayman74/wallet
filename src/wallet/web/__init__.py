@@ -1,13 +1,14 @@
 import functools
 import io
+from datetime import date
 from typing import Any, Dict, Generic, Type, TypeVar
 
 from aiohttp import web
 from aiohttp_micro.web.handlers import json_response
 from aiohttp_micro.web.handlers.openapi import ParameterIn, ParametersSchema
-from marshmallow import fields, post_load, Schema, ValidationError
+from marshmallow import fields, post_load, pre_dump, Schema, ValidationError
 
-from wallet.core.entities import Payload  # noqa: F401
+from wallet.core.entities import Payload, Period  # noqa: F401
 
 
 PT = TypeVar("PT", bound="Payload")
@@ -35,6 +36,19 @@ class PayloadSchema(Schema, Generic[PT]):
     @post_load
     def build_payload(self, payload: Dict[str, Any], **kwargs) -> PT:
         return self.payload_cls(**payload)
+
+
+class PeriodSchema(Schema):
+    begin = fields.Date(format="iso", data_key="from", required=True)
+    end = fields.Date(format="iso", data_key="to", required=True)
+
+    @post_load
+    def make_period(self, data: Dict[str, date], **kwargs) -> Period:
+        return Period(begin=data["begin"], end=data["end"])
+
+    @pre_dump
+    def serialize(self, period: Period, **kwargs) -> Dict[str, str]:
+        return {"begin": period.begin, "end": period.end}
 
 
 async def get_payload(request: web.Request) -> Dict[str, Any]:
